@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800">
+  <rect width="1200" height="800" fill="#9fd7ef"/>
+  <circle cx="1030" cy="120" r="62" fill="#f6d365"/>
+  <rect y="520" width="1200" height="280" fill="#7dce82"/>
+  <ellipse cx="180" cy="530" rx="90" ry="70" fill="#2f6f4e"/>
+  <ellipse cx="990" cy="545" rx="110" ry="78" fill="#246b45"/>
+  <path d="M260 430 L600 180 L940 430 Z" fill="#e25b45"/>
+  <rect x="330" y="430" width="540" height="250" fill="#f7f1e3"/>
+  <rect x="560" y="545" width="90" height="135" fill="#efbf4a"/>
+  <circle cx="630" cy="610" r="6" fill="#6b4a1e"/>
+  <rect x="390" y="480" width="70" height="52" fill="#7ec8e3"/>
+  <rect x="480" y="480" width="70" height="52" fill="#2457a6"/>
+  <rect x="650" y="480" width="70" height="52" fill="#2457a6"/>
+  <rect x="740" y="480" width="70" height="52" fill="#7ec8e3"/>
+  <rect x="390" y="560" width="70" height="52" fill="#f4a259"/>
+  <rect x="740" y="560" width="70" height="52" fill="#f4a259"/>
+  <rect x="690" y="300" width="18" height="90" fill="#1d4e89"/>
+  <rect x="708" y="312" width="48" height="28" fill="#f4d35e"/>
+  <text x="612" y="250" text-anchor="middle" font-family="Nunito, sans-serif" font-size="42" fill="#fff" font-weight="700">HORIZONTE</text>
+</svg>

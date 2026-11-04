@@ -1,0 +1,4 @@
+project_id = "tour-interativo-pela-escola"
+
+[functions.game]
+verify_jwt = false
