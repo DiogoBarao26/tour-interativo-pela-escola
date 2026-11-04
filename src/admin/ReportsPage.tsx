@@ -31,7 +31,7 @@ export function ReportsPage() {
   return (
     <section className="grid gap-4">
       <header>
-        <h1 className="text-3xl font-extrabold">Relatórios</h1>
+        <h1 className="text-3xl font-extrabold">Quem jogou</h1>
         <p>{filtered.length} registro(s) no filtro atual.</p>
       </header>
       <Notice error={error} />

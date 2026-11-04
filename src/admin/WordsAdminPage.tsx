@@ -46,7 +46,7 @@ export function WordsAdminPage() {
     <section className="grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
       <div className="grid gap-4">
         <header>
-          <h1 className="text-3xl font-extrabold">Nuvem de palavras</h1>
+          <h1 className="text-3xl font-extrabold">Palavras</h1>
           <p>A lista abaixo é só do painel. O jogo recebe as palavras sem saber quais são corretas.</p>
         </header>
         <Notice error={error} message={message} />
@@ -82,7 +82,7 @@ export function WordsAdminPage() {
           <Field label="Velocidade personalizada (pixels por segundo)"><TextInput type="number" min={12} max={320} value={rules.wordsCustomSpeed} onChange={(event) => setRules({ ...rules, wordsCustomSpeed: Number(event.target.value) })} /></Field>
           <Field label="Frequência (milissegundos)"><TextInput type="number" min={400} value={rules.wordsSpawnIntervalMs} onChange={(event) => setRules({ ...rules, wordsSpawnIntervalMs: Number(event.target.value) })} /></Field>
           <Field label="Palavras simultâneas"><TextInput type="number" min={1} max={12} value={rules.wordsMaxSimultaneous} onChange={(event) => setRules({ ...rules, wordsMaxSimultaneous: Number(event.target.value) })} /></Field>
-          <button className="btn btn-primary md:col-span-2" type="button" onClick={() => void publish()}>Publicar regras da nuvem</button>
+          <button className="btn btn-primary md:col-span-2" type="button" onClick={() => void publish()}>Salvar palavras</button>
         </div>
       </div>
       <WordPreview words={words} rules={rules} />

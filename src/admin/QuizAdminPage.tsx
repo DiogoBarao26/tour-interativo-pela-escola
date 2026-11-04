@@ -68,8 +68,8 @@ export function QuizAdminPage() {
   return (
     <section className="grid gap-5">
       <header>
-        <h1 className="text-3xl font-extrabold">Quiz</h1>
-        <p>Cadastre perguntas ilimitadas, com quatro ou mais alternativas e uma resposta correta.</p>
+        <h1 className="text-3xl font-extrabold">Perguntas</h1>
+        <p>Escreva a pergunta, as respostas e marque a certa.</p>
       </header>
       <Notice error={error} message={message} />
       <form className="card grid gap-3 p-4" onSubmit={(event) => { event.preventDefault(); void save(); }}>
@@ -91,12 +91,12 @@ export function QuizAdminPage() {
                 <input type="radio" name="correct" checked={alternative.isCorrect} onChange={() => setDraft({ ...draft, alternatives: draft.alternatives.map((item) => ({ ...item, isCorrect: item.id === alternative.id })) })} />
                 Correta
               </label>
-              <TextInput value={alternative.label} aria-label={`Alternativa ${index + 1}`} onChange={(event) => setDraft({ ...draft, alternatives: draft.alternatives.map((item) => item.id === alternative.id ? { ...item, label: event.target.value } : item) })} />
+              <TextInput value={alternative.label} aria-label={`Resposta ${index + 1}`} onChange={(event) => setDraft({ ...draft, alternatives: draft.alternatives.map((item) => item.id === alternative.id ? { ...item, label: event.target.value } : item) })} />
               <button className="btn btn-secondary" type="button" onClick={() => setDraft({ ...draft, alternatives: draft.alternatives.filter((item) => item.id !== alternative.id) })} disabled={draft.alternatives.length <= 4}>Remover</button>
             </div>
           ))}
         </div>
-        <button className="btn btn-secondary" type="button" onClick={() => setDraft({ ...draft, alternatives: [...draft.alternatives, { id: crypto.randomUUID(), label: '', isCorrect: false, position: draft.alternatives.length + 1 }] })}>Adicionar alternativa</button>
+        <button className="btn btn-secondary" type="button" onClick={() => setDraft({ ...draft, alternatives: [...draft.alternatives, { id: crypto.randomUUID(), label: '', isCorrect: false, position: draft.alternatives.length + 1 }] })}>Adicionar resposta</button>
         <button className="btn btn-primary" type="submit">Salvar pergunta</button>
       </form>
       <ul className="grid gap-3">

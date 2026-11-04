@@ -4,6 +4,12 @@ Plataforma gamificada para a comunidade escolar conhecer a instituição em trê
 
 O participante abre o link, informa o nome e começa. Não há instalação, cadastro de jogador nem servidor para iniciar.
 
+## Para a equipe do 7º ano
+
+Abra o site e toque em **Cuidar do tour**. A senha inicial é `horizonte`. Dentro do painel dá para trocar o nome da escola, as cores, as perguntas, a foto, as palavras, o tempo e a senha. Não é preciso e-mail.
+
+Enquanto o banco na nuvem não estiver ligado, o que a equipe salvar fica neste aparelho e neste navegador. Outro celular ainda vê o tour de exemplo.
+
 ## O que já está no código
 
 - Jogo com as três fases, cronômetros, tentativas, pontuação e animações.
@@ -15,7 +21,7 @@ O participante abre o link, informa o nome e começa. Não há instalação, cad
 
 ## O que precisa ser ativado por você
 
-O GitHub Pages só publica o frontend. Sem o projeto Supabase, o site publicado mostra as instruções e não finge que os resultados foram gravados.
+O GitHub Pages publica o jogo e o painel. Sem o projeto Supabase, a equipe entra com a senha `horizonte` e as mudanças ficam no navegador. Com o Supabase ligado, a mesma tela de senha entra com o usuário `equipe@tour.local`.
 
 1. Crie um projeto em [supabase.com](https://supabase.com).
 2. No SQL Editor, execute nesta ordem:

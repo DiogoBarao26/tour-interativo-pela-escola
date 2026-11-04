@@ -1,4 +1,4 @@
-import { PHASE_META, defaultHomeConfig } from '../domain/defaults';
+import { PHASE_META } from '../domain/defaults';
 import type { HomeConfig, PhaseKey, SessionState } from '../domain/types';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import { mapHome } from './mappers';
@@ -25,11 +25,8 @@ export async function loadHomeConfig(): Promise<HomeConfig> {
     const audio = await supabase.from('public_audio').select('*').maybeSingle();
     return mapHome(settings.data, audio.data, 'remote');
   }
-  if (import.meta.env.DEV) {
-    const dev = await import('@devonly/backend');
-    return dev.readHomeConfig();
-  }
-  return defaultHomeConfig('unconfigured');
+  const dev = await import('@devonly/backend');
+  return dev.readHomeConfig();
 }
 
 export async function callGame<T>(action: string, body: Record<string, unknown> = {}): Promise<T> {
@@ -43,11 +40,8 @@ export async function callGame<T>(action: string, body: Record<string, unknown> 
     }
     return data as T;
   }
-  if (import.meta.env.DEV) {
-    const dev = await import('@devonly/backend');
-    return dev.handle(action, body) as Promise<T>;
-  }
-  throw new Error('O banco de dados ainda não foi configurado.');
+  const dev = await import('@devonly/backend');
+  return dev.handle(action, body) as Promise<T>;
 }
 
 export function nextPath(state: SessionState) {

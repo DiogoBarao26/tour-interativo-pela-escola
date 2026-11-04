@@ -27,7 +27,7 @@ export function AppearancePage() {
     try {
       await saveTheme(theme!);
       await reload();
-      setMessage('Identidade publicada. Os próximos acessos já usam estas cores e textos.');
+      setMessage('Pronto. O jogo já usa este nome e estas cores.');
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Não foi possível publicar.');
     } finally {
@@ -45,8 +45,8 @@ export function AppearancePage() {
     <section className="grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
       <div className="grid gap-4">
         <header>
-          <h1 className="text-3xl font-extrabold">Identidade visual</h1>
-          <p>A prévia ao lado muda na hora. Os jogadores só veem a versão publicada.</p>
+          <h1 className="text-3xl font-extrabold">Nome e cores</h1>
+          <p>A caixa ao lado mostra como vai ficar. Toque em Salvar para o jogo usar isso.</p>
         </header>
         <Notice error={error} message={message} />
         {contrast < 4.5 ? <Notice error="O contraste entre texto e fundo está baixo. Ajuste as cores para facilitar a leitura." /> : null}
@@ -84,7 +84,7 @@ export function AppearancePage() {
           <Field label="Logotipo"><input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" onChange={(event) => void upload('logoUrl', event.target.files?.[0])} /></Field>
           <Field label="Imagem de capa"><input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" onChange={(event) => void upload('coverUrl', event.target.files?.[0])} /></Field>
           <Toggle label="Pedir turma ou identificação" checked={theme.collectClass} onChange={(collectClass) => setTheme({ ...theme, collectClass })} />
-          <button className="btn btn-primary" type="button" disabled={pending} onClick={() => void publish()}>{pending ? 'Publicando...' : 'Publicar identidade'}</button>
+          <button className="btn btn-primary" type="button" disabled={pending} onClick={() => void publish()}>{pending ? 'Salvando...' : 'Salvar nome e cores'}</button>
         </div>
       </div>
       <aside className="card overflow-hidden p-4" style={themeStyle(theme)} aria-label="Pré-visualização do jogador">

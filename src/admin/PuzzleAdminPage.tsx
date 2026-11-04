@@ -55,7 +55,7 @@ export function PuzzleAdminPage() {
   return (
     <section className="grid gap-5">
       <header>
-        <h1 className="text-3xl font-extrabold">Quebra-cabeça</h1>
+        <h1 className="text-3xl font-extrabold">Foto do quebra-cabeça</h1>
         <p>As fotos ficam no armazenamento da nuvem e podem ser trocadas a qualquer momento.</p>
       </header>
       <Notice error={error} message={message} />
@@ -73,7 +73,7 @@ export function PuzzleAdminPage() {
         <Field label="Tentativas"><TextInput type="number" min={1} value={rules.puzzleAttempts} onChange={(event) => setRules({ ...rules, puzzleAttempts: Number(event.target.value) })} /></Field>
         <Field label="Pontuação base"><TextInput type="number" min={0} value={rules.puzzleScore} onChange={(event) => setRules({ ...rules, puzzleScore: Number(event.target.value) })} /></Field>
         <Field label="Bônus por rapidez"><TextInput type="number" min={0} value={rules.puzzleSpeedBonus} onChange={(event) => setRules({ ...rules, puzzleSpeedBonus: Number(event.target.value) })} /></Field>
-        <button className="btn btn-primary" type="button" onClick={() => void publishRules()}>Publicar regras do quebra-cabeça</button>
+        <button className="btn btn-primary" type="button" onClick={() => void publishRules()}>Salvar regras da foto</button>
       </form>
       <ul className="grid gap-4 md:grid-cols-2">
         {puzzles.map((puzzle) => (

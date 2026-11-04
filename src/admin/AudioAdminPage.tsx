@@ -42,7 +42,7 @@ export function AudioAdminPage() {
     <section className="grid max-w-4xl gap-4">
       <header>
         <h1 className="text-3xl font-extrabold">Sons</h1>
-        <p>Teste cada faixa antes de publicar. Os arquivos de demonstração são originais e podem ser substituídos.</p>
+        <p>Aperte o botão de cada som para ouvir. Se quiser, troque o arquivo.</p>
       </header>
       <Notice error={error} message={message} />
       <div className="card grid gap-4 p-4">
@@ -68,7 +68,7 @@ export function AudioAdminPage() {
           </li>
         ))}
       </ul>
-      <button className="btn btn-primary w-fit" type="button" onClick={() => void publish()}>Publicar sons</button>
+      <button className="btn btn-primary w-fit" type="button" onClick={() => void publish()}>Salvar sons</button>
     </section>
   );
 }

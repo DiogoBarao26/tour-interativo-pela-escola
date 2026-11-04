@@ -5,14 +5,14 @@ import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import { setDevAdmin } from './guard';
 
 const LINKS = [
-  ['/admin', 'Painel'],
-  ['/admin/aparencia', 'Identidade visual'],
-  ['/admin/quiz', 'Quiz'],
-  ['/admin/quebra-cabeca', 'Quebra-cabeça'],
-  ['/admin/nuvem', 'Nuvem de palavras'],
-  ['/admin/configuracoes', 'Configurações'],
+  ['/admin', 'Início'],
+  ['/admin/aparencia', 'Nome e cores'],
+  ['/admin/quiz', 'Perguntas'],
+  ['/admin/quebra-cabeca', 'Foto'],
+  ['/admin/nuvem', 'Palavras'],
+  ['/admin/configuracoes', 'Tempo e pontos'],
   ['/admin/sons', 'Sons'],
-  ['/admin/relatorios', 'Relatórios'],
+  ['/admin/relatorios', 'Quem jogou'],
 ];
 
 export function AdminLayout() {
@@ -30,8 +30,8 @@ export function AdminLayout() {
       <aside className={`${open ? 'block' : 'hidden'} border-b bg-white md:block md:border-r`}>
         <div className="flex items-center justify-between p-4">
           <div>
-            <p className="text-xs font-extrabold uppercase" style={{ color: 'var(--primary)' }}>Administração</p>
-            <strong>Tour da escola</strong>
+            <p className="text-xs font-extrabold uppercase" style={{ color: 'var(--primary)' }}>Equipe</p>
+            <strong>Cuidar do tour</strong>
           </div>
           <button className="btn btn-secondary !min-h-11 md:hidden" type="button" onClick={() => setOpen(false)} aria-label="Fechar menu">
             <X aria-hidden />
@@ -52,7 +52,7 @@ export function AdminLayout() {
           ))}
         </nav>
         <div className="grid gap-2 p-3">
-          <a className="btn btn-secondary" href={`${import.meta.env.BASE_URL}`}>Ver como participante</a>
+          <a className="btn btn-secondary" href={`${import.meta.env.BASE_URL}`}>Jogar</a>
           <button className="btn btn-secondary" type="button" onClick={() => void logout()}>Sair</button>
         </div>
       </aside>
@@ -61,7 +61,7 @@ export function AdminLayout() {
           <button className="btn btn-secondary !min-h-11" type="button" onClick={() => setOpen(true)} aria-label="Abrir menu">
             <Menu aria-hidden />
           </button>
-          <strong>Painel da escola</strong>
+          <strong>Cuidar do tour</strong>
         </header>
         <div className="px-4 pb-16 pt-2 md:px-8 md:py-8">
           <Outlet />

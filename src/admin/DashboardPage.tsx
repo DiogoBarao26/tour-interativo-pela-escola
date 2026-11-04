@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { formatDuration } from '../domain/rules';
 import { loadDashboard, type DashboardData } from '../services/adminApi';
 import { Notice } from './fields';
@@ -30,8 +31,19 @@ export function DashboardPage() {
   return (
     <section className="grid gap-5">
       <header>
-        <h1 className="text-3xl font-extrabold">Indicadores</h1>
-        <p>Números reais das partidas registradas. Sem partidas, os valores ficam zerados.</p>
+        <h1 className="text-3xl font-extrabold">O que você quer mudar?</h1>
+        <p>Escolha uma parte do tour. Não precisa saber programação.</p>
+      </header>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Shortcut to="/admin/aparencia" title="Nome e cores" text="Troque o nome da escola, as cores e a frase de boas-vindas." />
+        <Shortcut to="/admin/quiz" title="Perguntas" text="Escreva as perguntas e marque a resposta certa." />
+        <Shortcut to="/admin/quebra-cabeca" title="Foto" text="Envie uma foto da escola para o quebra-cabeça." />
+        <Shortcut to="/admin/nuvem" title="Palavras" text="Escolha o que combina com a escola e o que não combina." />
+        <Shortcut to="/admin/configuracoes" title="Tempo e pontos" text="Decida quanto tempo cada fase dura e a senha da equipe." />
+        <Shortcut to="/admin/relatorios" title="Quem jogou" text="Veja os nomes, as notas e baixe a lista." />
+      </div>
+      <header>
+        <h2 className="text-2xl font-extrabold">Como o pessoal foi</h2>
       </header>
       <Notice error={error} />
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -53,6 +65,15 @@ export function DashboardPage() {
         <Bars items={[{ label: 'Aprovados', value: approved }, { label: 'Incentivo', value: finished.length - approved }]} />
       </article>
     </section>
+  );
+}
+
+function Shortcut({ to, title, text }: { to: string; title: string; text: string }) {
+  return (
+    <Link className="card p-4" to={to}>
+      <strong className="text-xl">{title}</strong>
+      <p className="mt-1">{text}</p>
+    </Link>
   );
 }
 

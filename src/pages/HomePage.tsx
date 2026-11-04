@@ -44,9 +44,9 @@ export function HomePage() {
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-5xl flex-col px-4 pb-28 pt-6 md:px-8">
-      {config.mode === 'development' ? (
+      {config.mode === 'local' ? (
         <p className="mb-4 rounded-2xl bg-white px-4 py-3 text-sm font-semibold">
-          Modo de desenvolvimento neste navegador. Os resultados ficam apenas neste computador. A versão publicada usa o Supabase.
+          A equipe entra em Cuidar do tour para mudar o nome, as perguntas e as fotos. A senha inicial é horizonte.
         </p>
       ) : null}
       <motion.section
@@ -109,7 +109,6 @@ export function HomePage() {
       <form className="card mt-6 grid gap-4 p-5 md:p-7" onSubmit={onSubmit}>
         <h2 className="text-2xl font-extrabold">Antes de começar</h2>
         {error ? <p role="alert" className="font-semibold text-red-800">{error}</p> : null}
-        {config.mode === 'unconfigured' ? <SetupHelp /> : null}
         <label className="grid gap-2 font-bold">
           Seu nome
           <input className="field font-semibold" value={name} onChange={(event) => setName(event.target.value)} autoComplete="name" maxLength={80} required={ready} />
@@ -127,22 +126,9 @@ export function HomePage() {
         <p className="text-sm">Não é preciso criar conta. O som começa depois do primeiro toque ou clique.</p>
       </form>
       <footer className="mt-6 text-sm">
-        <a className="font-extrabold underline" href={`${import.meta.env.BASE_URL}admin`}>Área da escola</a>
+        <a className="font-extrabold underline" href={`${import.meta.env.BASE_URL}admin`}>Cuidar do tour</a>
       </footer>
     </main>
   );
 }
 
-function SetupHelp() {
-  return (
-    <div className="rounded-2xl bg-white p-4 text-sm leading-6">
-      <p className="font-extrabold">O tour ainda não está ligado a um banco de dados.</p>
-      <ol className="mt-2 list-decimal pl-5">
-        <li>Crie um projeto no Supabase e execute os arquivos SQL da pasta supabase/migrations.</li>
-        <li>Publique a função game e crie o primeiro administrador.</li>
-        <li>Preencha VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY no GitHub Actions.</li>
-        <li>Abra o endereço publicado no GitHub Pages. O passo a passo completo está no README.</li>
-      </ol>
-    </div>
-  );
-}

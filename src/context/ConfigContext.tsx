@@ -15,17 +15,12 @@ interface ConfigValue {
 const Context = createContext<ConfigValue | null>(null);
 
 export function ConfigProvider({ children }: { children: React.ReactNode }) {
-  const initialMode = isSupabaseConfigured ? 'remote' : import.meta.env.DEV ? 'development' : 'unconfigured';
+  const initialMode = isSupabaseConfigured ? 'remote' : 'local';
   const [config, setConfig] = useState<HomeConfig>(() => defaultHomeConfig(initialMode));
-  const [loading, setLoading] = useState(initialMode !== 'unconfigured');
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const reload = useCallback(async () => {
-    if (!isSupabaseConfigured && !import.meta.env.DEV) {
-      setConfig(defaultHomeConfig('unconfigured'));
-      setLoading(false);
-      return;
-    }
     setLoading(true);
     try {
       const next = await loadHomeConfig();

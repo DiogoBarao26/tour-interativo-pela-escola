@@ -82,7 +82,7 @@ export type AudioKey =
 
 export interface HomeConfig {
   configured: boolean;
-  mode: 'remote' | 'development' | 'unconfigured';
+  mode: 'remote' | 'local' | 'development' | 'unconfigured';
   theme: ThemeSettings;
   rules: RulesSettings;
   audio: AudioSettings;

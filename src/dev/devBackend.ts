@@ -23,7 +23,7 @@ import {
 } from '../domain/rules';
 import type { AdminContent, DashboardData } from '../services/adminApi';
 
-const STORAGE_KEY = 'tour.dev.db.v1';
+const STORAGE_KEY = 'tour.local.db.v2';
 
 interface Budget {
   quiz: number;
@@ -110,10 +110,10 @@ function seed(): Db {
     ],
     questions: [
       question(q1, 'Em que ano a Escola Horizonte foi fundada?', 1, ['1982', '1998', '2005', '2010'], 1),
-      question(q2, 'Qual é o lema da Escola Horizonte?', 2, ['Vencer a qualquer custo', 'Saber para transformar', 'Estudar só na véspera', 'Cada um por si'], 1),
+      question(q2, 'Qual é o lema da Escola Horizonte?', 2, ['Vencer a qualquer custo', 'Aprender juntos', 'Estudar só na véspera', 'Cada um por si'], 1),
       question(q3, 'Onde acontecem os experimentos de ciências?', 3, ['Na biblioteca', 'Na quadra', 'No laboratório', 'No refeitório'], 2),
       question(q4, 'Quais etapas de ensino a escola oferece nesta demonstração?', 4, ['Somente o Ensino Médio', 'Educação Infantil, Fundamental e Médio', 'Apenas cursos livres', 'Somente a Educação Infantil'], 1),
-      question(q5, 'Qual projeto semanal convida as famílias para a escola?', 5, ['Portas Abertas', 'Noite silenciosa', 'Prova relâmpago', 'Recreio eterno'], 0),
+      question(q5, 'Qual projeto semanal convida as famílias para a escola?', 5, ['Família na escola', 'Noite silenciosa', 'Prova relâmpago', 'Recreio eterno'], 0),
     ].map((item, index) => ({ ...item, position: index + 1 })),
     words: [
       word('respeito', true, 7),
@@ -122,10 +122,10 @@ function seed(): Db {
       word('ciências', true, 7),
       word('inclusão', true, 6),
       word('sustentabilidade', true, 6),
-      word('desrespeito', false, 0),
+      word('pressa', false, 0),
       word('bagunça', false, 0),
       word('exclusão', false, 0),
-      word('desperdício', false, 0),
+      word('sujeira', false, 0),
     ],
     sessions: [],
   };
@@ -164,9 +164,9 @@ export function readHomeConfig(): HomeConfig {
   const db = load();
   const selected = db.puzzles.find((item) => item.id === db.rules.puzzleSelectedId);
   return {
-    ...defaultHomeConfig('development'),
+    ...defaultHomeConfig('local'),
     configured: true,
-    mode: 'development',
+    mode: 'local',
     theme: db.theme,
     rules: {
       ...db.rules,

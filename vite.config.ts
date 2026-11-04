@@ -36,15 +36,12 @@ function spaFallback(): Plugin {
   };
 }
 
-export default defineConfig(({ command }) => ({
+export default defineConfig({
   base: process.env.VITE_BASE_PATH || '/',
   plugins: [react(), spaFallback()],
   resolve: {
     alias: {
-      '@devonly/backend': resolve(
-        process.cwd(),
-        command === 'serve' ? 'src/dev/devBackend.ts' : 'src/dev/devBackend.stub.ts',
-      ),
+      '@devonly/backend': resolve(process.cwd(), 'src/dev/devBackend.ts'),
     },
   },
-}));
+});

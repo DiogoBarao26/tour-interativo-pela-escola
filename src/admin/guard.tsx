@@ -29,7 +29,7 @@ export function RequireAdmin() {
       });
       return;
     }
-    setStatus(import.meta.env.DEV && devAdminOn() ? 'ok' : 'no');
+    setStatus(devAdminOn() ? 'ok' : 'no');
   }, []);
 
   if (status === 'loading') return <p className="p-8 font-bold">Carregando painel...</p>;

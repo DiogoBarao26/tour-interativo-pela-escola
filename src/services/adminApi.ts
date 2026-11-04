@@ -30,7 +30,6 @@ function client() {
 }
 
 async function dev() {
-  if (!import.meta.env.DEV) throw new Error('O Supabase ainda não foi configurado.');
   return import('@devonly/backend');
 }
 
@@ -195,10 +194,7 @@ export async function loadDashboard(): Promise<DashboardData> {
 export async function uploadAsset(bucket: 'branding' | 'puzzles' | 'questions' | 'audio', file: File) {
   if (file.size > 8 * 1024 * 1024) throw new Error('O arquivo precisa ter no máximo 8 MB.');
   const db = client();
-  if (!db) {
-    if (!import.meta.env.DEV) throw new Error('O Supabase Storage ainda não foi configurado.');
-    return readFile(file);
-  }
+  if (!db) return readFile(file);
   const extension = file.name.split('.').pop()?.toLowerCase() || 'bin';
   const path = `${crypto.randomUUID()}.${extension}`;
   const { error } = await db.storage.from(bucket).upload(path, file, { contentType: file.type || undefined });
