@@ -6,9 +6,20 @@ O participante abre o link, informa o nome e começa. Não há instalação, cad
 
 ## Para a equipe do 7º ano
 
-Abra o site e toque em **Cuidar do tour**. A senha inicial é `horizonte`. Dentro do painel dá para trocar o nome da escola, as cores, as perguntas, a foto, as palavras, o tempo e a senha. Não é preciso e-mail.
+Abra o site e toque em **Cuidar do tour**. Há seis senhas, uma para cada jogo:
 
-Enquanto o banco na nuvem não estiver ligado, o que a equipe salvar fica neste aparelho e neste navegador. Outro celular ainda vê o tour de exemplo.
+| Jogo | Senha |
+| --- | --- |
+| Jogo 1 | sol |
+| Jogo 2 | lua |
+| Jogo 3 | mar |
+| Jogo 4 | rio |
+| Jogo 5 | flor |
+| Jogo 6 | estrela |
+
+Quem entra com uma senha muda só aquele jogo: nome, cores, perguntas, foto, palavras, tempo e a própria senha. Na tela inicial, o jogador escolhe qual dos seis quer fazer.
+
+Enquanto o banco na nuvem não estiver ligado, os seis jogos ficam neste aparelho e neste navegador. Outro celular começa com os seis jogos de exemplo.
 
 ## O que já está no código
 
@@ -21,7 +32,7 @@ Enquanto o banco na nuvem não estiver ligado, o que a equipe salvar fica neste 
 
 ## O que precisa ser ativado por você
 
-O GitHub Pages publica o jogo e o painel. Sem o projeto Supabase, a equipe entra com a senha `horizonte` e as mudanças ficam no navegador. Com o Supabase ligado, a mesma tela de senha entra com o usuário `equipe@tour.local`.
+O GitHub Pages publica o jogo e o painel. Sem o projeto Supabase, cada pessoa entra com a senha do próprio jogo e as mudanças ficam no navegador. Com o Supabase ligado, a tela de senha entra com o usuário `equipe@tour.local`.
 
 1. Crie um projeto em [supabase.com](https://supabase.com).
 2. No SQL Editor, execute nesta ordem:

@@ -17,6 +17,12 @@ export function clearToken() {
   sessionStorage.removeItem(TOKEN_KEY);
 }
 
+export async function loadGameChoices() {
+  if (isSupabaseConfigured && supabase) return null;
+  const dev = await import('@devonly/backend');
+  return dev.listGames();
+}
+
 export async function loadHomeConfig(): Promise<HomeConfig> {
   if (isSupabaseConfigured && supabase) {
     const settings = await supabase.from('public_settings').select('*').maybeSingle();

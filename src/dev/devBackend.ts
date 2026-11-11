@@ -22,8 +22,9 @@ import {
   shuffleNumbers,
 } from '../domain/rules';
 import type { AdminContent, DashboardData } from '../services/adminApi';
+import { activeGame, GAMES, playGameId } from '../admin/teamPassword';
 
-const STORAGE_KEY = 'tour.local.db.v2';
+const STORAGE_KEY = 'tour.local.db.v3';
 
 interface Budget {
   quiz: number;
@@ -78,6 +79,10 @@ interface Db {
   puzzles: PuzzleAdmin[];
   words: WordAdmin[];
   sessions: Session[];
+}
+
+interface Store {
+  games: Record<string, Db>;
 }
 
 function seed(): Db {
@@ -146,22 +151,59 @@ function seed(): Db {
   }
 }
 
-function load(): Db {
+function loadStore(): Store {
   const raw = localStorage.getItem(STORAGE_KEY);
-  if (!raw) {
-    const created = seed();
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(created));
-    return created;
+  const parsed = raw ? (JSON.parse(raw) as Store) : { games: {} };
+  if (!parsed.games) parsed.games = {};
+  let changed = !raw;
+  for (const game of GAMES) {
+    if (!parsed.games[game.id]) {
+      parsed.games[game.id] = seed();
+      changed = true;
+    }
   }
-  return JSON.parse(raw) as Db;
+  if (changed) localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
+  return parsed;
+}
+
+function saveStore(store: Store) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+}
+
+function adminSlotId() {
+  return activeGame()?.id ?? GAMES[0].id;
+}
+
+function load(): Db {
+  return loadStore().games[adminSlotId()];
 }
 
 function save(db: Db) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
+  const store = loadStore();
+  store.games[adminSlotId()] = db;
+  saveStore(store);
+}
+
+function viewingId() {
+  const onAdmin = typeof location !== 'undefined' && location.pathname.includes('/admin');
+  if (onAdmin) return activeGame()?.id ?? null;
+  return playGameId();
+}
+
+export function listGames() {
+  const store = loadStore();
+  return GAMES.map((game) => ({
+    id: game.id,
+    name: game.name,
+    schoolName: store.games[game.id].theme.schoolName,
+    gameTitle: store.games[game.id].theme.gameTitle,
+  }));
 }
 
 export function readHomeConfig(): HomeConfig {
-  const db = load();
+  const id = viewingId();
+  const db = id ? loadStore().games[id] : null;
+  if (!db) return { ...defaultHomeConfig('local'), configured: true, mode: 'local' };
   const selected = db.puzzles.find((item) => item.id === db.rules.puzzleSelectedId);
   return {
     ...defaultHomeConfig('local'),
@@ -282,10 +324,19 @@ export const admin = {
 };
 
 export async function handle(action: string, body: Record<string, unknown>) {
-  const db = load();
+  const store = loadStore();
+  const id = action === 'start' ? String(body.slotId ?? '') : slotByToken(store, String(body.token ?? ''));
+  const db = store.games[id];
+  if (!db) throw new Error(action === 'start' ? 'Escolha um jogo para começar.' : 'Esta partida não foi encontrada. Volte ao início.');
   const result = run(db, action, body);
-  save(db);
+  store.games[id] = db;
+  saveStore(store);
   return result;
+}
+
+function slotByToken(store: Store, token: string) {
+  if (!token) return '';
+  return GAMES.find((game) => store.games[game.id]?.sessions.some((session) => session.token === token))?.id ?? '';
 }
 
 function run(db: Db, action: string, body: Record<string, unknown>) {

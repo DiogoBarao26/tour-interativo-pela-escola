@@ -1,14 +1,16 @@
 import { FormEvent, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useConfig } from '../context/ConfigContext';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import { Field, Notice, TextInput } from './fields';
 import { setDevAdmin } from './guard';
-import { checkTeamPassword } from './teamPassword';
+import { GAMES, gamePasswords, matchGame, setActiveGame } from './teamPassword';
 
 const TEAM_EMAIL = 'equipe@tour.local';
 
 export function LoginPage() {
   const navigate = useNavigate();
+  const { reload } = useConfig();
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -26,10 +28,12 @@ export function LoginPage() {
           await supabase.auth.signOut();
           throw new Error('Essa senha não está certa. Tente de novo.');
         }
-      } else if (!checkTeamPassword(password)) {
-        throw new Error('Essa senha não está certa. Tente de novo.');
       } else {
+        const game = matchGame(password);
+        if (!game) throw new Error('Essa senha não está certa. Tente de novo.');
+        setActiveGame(game.id);
         setDevAdmin(true);
+        await reload();
       }
       navigate('/admin');
     } catch (caught) {
@@ -44,9 +48,9 @@ export function LoginPage() {
       <section className="card p-6 md:p-8">
         <p className="text-sm font-extrabold uppercase tracking-wide" style={{ color: 'var(--primary)' }}>Equipe da escola</p>
         <h1 className="mt-2 text-3xl font-extrabold">Cuidar do tour</h1>
-        <p className="mt-2">Digite a senha da equipe. Não precisa de e-mail nem de conta.</p>
+        <p className="mt-2">Cada senha abre um jogo. O que você mudar fica só no seu.</p>
         <form className="mt-6 grid gap-4" onSubmit={(event) => void submit(event)}>
-          <Field label="Senha da equipe">
+          <Field label="Sua senha">
             <TextInput
               type="password"
               autoComplete="current-password"
@@ -59,7 +63,15 @@ export function LoginPage() {
           <button className="btn btn-primary text-lg" type="submit" disabled={pending}>
             {pending ? 'Entrando...' : 'Entrar'}
           </button>
-          {!isSupabaseConfigured ? <p className="text-sm">A senha inicial é <strong>horizonte</strong>. Dá para trocar depois, dentro do painel.</p> : null}
+          {!isSupabaseConfigured ? (
+            <ul className="grid gap-1 text-sm">
+              {GAMES.map((game) => (
+                <li key={game.id}>
+                  <strong>{game.name}</strong>: {gamePasswords()[game.id]}
+                </li>
+              ))}
+            </ul>
+          ) : null}
         </form>
       </section>
     </main>

@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import { setDevAdmin } from './guard';
+import { activeGame, clearActiveGame } from './teamPassword';
 
 const LINKS = [
   ['/admin', 'Início'],
@@ -22,6 +23,7 @@ export function AdminLayout() {
   async function logout() {
     if (supabase && isSupabaseConfigured) await supabase.auth.signOut();
     setDevAdmin(false);
+    clearActiveGame();
     navigate('/admin/login');
   }
 
@@ -31,7 +33,7 @@ export function AdminLayout() {
         <div className="flex items-center justify-between p-4">
           <div>
             <p className="text-xs font-extrabold uppercase" style={{ color: 'var(--primary)' }}>Equipe</p>
-            <strong>Cuidar do tour</strong>
+            <strong>{activeGame()?.name ?? 'Cuidar do tour'}</strong>
           </div>
           <button className="btn btn-secondary !min-h-11 md:hidden" type="button" onClick={() => setOpen(false)} aria-label="Fechar menu">
             <X aria-hidden />
@@ -61,7 +63,7 @@ export function AdminLayout() {
           <button className="btn btn-secondary !min-h-11" type="button" onClick={() => setOpen(true)} aria-label="Abrir menu">
             <Menu aria-hidden />
           </button>
-          <strong>Cuidar do tour</strong>
+          <strong>{activeGame()?.name ?? 'Cuidar do tour'}</strong>
         </header>
         <div className="px-4 pb-16 pt-2 md:px-8 md:py-8">
           <Outlet />

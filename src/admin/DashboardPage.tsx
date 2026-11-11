@@ -3,12 +3,16 @@ import { Link } from 'react-router-dom';
 import { formatDuration } from '../domain/rules';
 import { loadDashboard, type DashboardData } from '../services/adminApi';
 import { Notice } from './fields';
+import { activeGame } from './teamPassword';
 
 const NAMES: Record<string, string> = { quiz: 'Quiz', puzzle: 'Quebra-cabeça', words: 'Nuvem de palavras' };
 
 export function DashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+  const mine = activeGame();
+  const playLink = mine ? `${window.location.origin}${import.meta.env.BASE_URL}?jogo=${mine.id}` : '';
 
   useEffect(() => {
     void loadDashboard().then(setData).catch((caught) => setError(caught instanceof Error ? caught.message : 'Falha ao carregar.'));
@@ -32,14 +36,29 @@ export function DashboardPage() {
     <section className="grid gap-5">
       <header>
         <h1 className="text-3xl font-extrabold">O que você quer mudar?</h1>
-        <p>Escolha uma parte do tour. Não precisa saber programação.</p>
+        <p>Este é o {mine?.name ?? 'seu jogo'}. O que você salvar não muda os outros cinco.</p>
       </header>
+      {playLink ? (
+        <div className="card grid gap-2 p-4">
+          <p className="font-bold">Quem for jogar pode abrir direto o seu jogo por este link.</p>
+          <p className="break-all text-sm">{playLink}</p>
+          <button
+            className="btn btn-secondary w-fit"
+            type="button"
+            onClick={() => {
+              void navigator.clipboard.writeText(playLink).then(() => setCopied(true));
+            }}
+          >
+            {copied ? 'Link copiado' : 'Copiar o link'}
+          </button>
+        </div>
+      ) : null}
       <div className="grid gap-3 sm:grid-cols-2">
         <Shortcut to="/admin/aparencia" title="Nome e cores" text="Troque o nome da escola, as cores e a frase de boas-vindas." />
         <Shortcut to="/admin/quiz" title="Perguntas" text="Escreva as perguntas e marque a resposta certa." />
         <Shortcut to="/admin/quebra-cabeca" title="Foto" text="Envie uma foto da escola para o quebra-cabeça." />
         <Shortcut to="/admin/nuvem" title="Palavras" text="Escolha o que combina com a escola e o que não combina." />
-        <Shortcut to="/admin/configuracoes" title="Tempo e pontos" text="Decida quanto tempo cada fase dura e a senha da equipe." />
+        <Shortcut to="/admin/configuracoes" title="Tempo e pontos" text="Decida quanto tempo cada fase dura e a senha deste jogo." />
         <Shortcut to="/admin/relatorios" title="Quem jogou" text="Veja os nomes, as notas e baixe a lista." />
       </div>
       <header>

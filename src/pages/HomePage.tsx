@@ -1,23 +1,28 @@
 import { motion } from 'framer-motion';
 import { FormEvent, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { clearPlayGame, GAMES, playGameId, setPlayGame } from '../admin/teamPassword';
 import { PhaseTrack } from '../components/ui';
 import { useConfig } from '../context/ConfigContext';
 import { PHASE_META } from '../domain/defaults';
 import { maxPossibleScore } from '../domain/rules';
 import { useAudio } from '../lib/audio';
-import { callGame, nextPath, saveToken } from '../services/gameApi';
+import { isSupabaseConfigured } from '../lib/supabase';
+import { callGame, clearToken, loadGameChoices, nextPath, saveToken } from '../services/gameApi';
 import type { SessionState } from '../domain/types';
 
 export function HomePage() {
-  const { config, loading, error } = useConfig();
+  const { config, loading, error, reload } = useConfig();
   const audio = useAudio();
   const navigate = useNavigate();
   const [name, setName] = useState('');
   const [className, setClassName] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
-  const ready = config.mode !== 'unconfigured' && !loading && !error;
+  const [search, setSearch] = useSearchParams();
+  const [choices, setChoices] = useState<{ id: string; name: string; schoolName: string; gameTitle: string }[]>([]);
+  const [chosen, setChosen] = useState(playGameId());
+  const ready = config.mode !== 'unconfigured' && !loading && !error && (isSupabaseConfigured || Boolean(chosen));
   const total = maxPossibleScore(config.rules);
 
   useEffect(() => {
@@ -25,13 +30,25 @@ export function HomePage() {
     return () => audio.stopMusic();
   }, [audio]);
 
+  useEffect(() => {
+    if (isSupabaseConfigured) return;
+    void loadGameChoices().then((games) => setChoices(games ?? []));
+    const query = search.get('jogo');
+    if (query && GAMES.some((game) => game.id === query) && query !== playGameId()) {
+      setPlayGame(query);
+      clearToken();
+      setChosen(query);
+      void reload();
+    }
+  }, [reload, search]);
+
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
     setFormError(null);
     if (!ready) return;
     setPending(true);
     try {
-      const response = await callGame<{ token: string; state: SessionState }>('start', { name, className });
+      const response = await callGame<{ token: string; state: SessionState }>('start', { name, className, slotId: playGameId() });
       saveToken(response.token);
       audio.playMusic('music_home');
       navigate(nextPath(response.state));
@@ -44,11 +61,56 @@ export function HomePage() {
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-5xl flex-col px-4 pb-28 pt-6 md:px-8">
-      {config.mode === 'local' ? (
+      {config.mode === 'local' && !chosen ? (
+        <section className="grid gap-4">
+          <header>
+            <h1 className="text-4xl font-extrabold">Escolha um jogo</h1>
+            <p className="mt-2 text-lg">São seis jogos. Cada pessoa da equipe personaliza o dela.</p>
+          </header>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {(choices.length ? choices : GAMES.map((game) => ({ ...game, schoolName: 'Escola Horizonte', gameTitle: 'TOUR INTERATIVO PELA ESCOLA' }))).map((game) => (
+              <button
+                key={game.id}
+                className="card p-5 text-left"
+                type="button"
+                onClick={() => {
+                  setPlayGame(game.id);
+                  clearToken();
+                  setChosen(game.id);
+                  setSearch({ jogo: game.id });
+                  void reload();
+                }}
+              >
+                <strong className="text-2xl">{game.name}</strong>
+                <p className="mt-1 font-bold">{game.schoolName}</p>
+                <p className="mt-1">{game.gameTitle}</p>
+              </button>
+            ))}
+          </div>
+          <footer className="text-sm">
+            <a className="font-extrabold underline" href={`${import.meta.env.BASE_URL}admin`}>Cuidar do tour</a>
+          </footer>
+        </section>
+      ) : null}
+      {config.mode === 'local' && chosen ? (
         <p className="mb-4 rounded-2xl bg-white px-4 py-3 text-sm font-semibold">
-          A equipe entra em Cuidar do tour para mudar o nome, as perguntas e as fotos. A senha inicial é horizonte.
+          Você está no {GAMES.find((game) => game.id === chosen)?.name}.{' '}
+          <button
+            className="font-extrabold underline"
+            type="button"
+            onClick={() => {
+              clearPlayGame();
+              clearToken();
+              setChosen(null);
+              setSearch({});
+              void reload();
+            }}
+          >
+            Escolher outro jogo
+          </button>
         </p>
       ) : null}
+      {config.mode !== 'local' || chosen ? <>
       <motion.section
         className="card overflow-hidden"
         initial={{ opacity: 0, y: 16 }}
@@ -128,6 +190,7 @@ export function HomePage() {
       <footer className="mt-6 text-sm">
         <a className="font-extrabold underline" href={`${import.meta.env.BASE_URL}admin`}>Cuidar do tour</a>
       </footer>
+      </> : null}
     </main>
   );
 }

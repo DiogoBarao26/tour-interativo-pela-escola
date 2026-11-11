@@ -6,7 +6,7 @@ import { useConfig } from '../context/ConfigContext';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import { loadAdminContent, saveRules } from '../services/adminApi';
 import { Field, Notice, Select, TextInput, Toggle } from './fields';
-import { setTeamPassword } from './teamPassword';
+import { activeGame, setGamePassword } from './teamPassword';
 
 export function SettingsPage() {
   const { reload } = useConfig();
@@ -30,10 +30,12 @@ export function SettingsPage() {
         const { error: updateError } = await supabase.auth.updateUser({ password: nextPassword });
         if (updateError) throw new Error('Não foi possível trocar a senha. Use pelo menos 6 letras.');
       } else {
-        setTeamPassword(nextPassword);
+        const mine = activeGame();
+        if (!mine) throw new Error('Entre de novo para trocar a senha deste jogo.');
+        setGamePassword(mine.id, nextPassword);
       }
       setNextPassword('');
-      setMessage('Senha da equipe trocada.');
+      setMessage('Senha deste jogo trocada. As outras continuam iguais.');
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Não foi possível trocar a senha.');
     }
@@ -64,10 +66,10 @@ export function SettingsPage() {
           void changePassword();
         }}
       >
-        <h2 className="text-xl font-extrabold">Senha da equipe</h2>
-        <p>É a senha usada para entrar aqui. Escolha uma palavra fácil de lembrar e de contar para a equipe.</p>
+        <h2 className="text-xl font-extrabold">Senha deste jogo</h2>
+        <p>Só esta senha abre o seu jogo. Escolha uma palavra fácil de lembrar.</p>
         <Field label="Nova senha">
-          <TextInput type="text" value={nextPassword} onChange={(event) => setNextPassword(event.target.value)} minLength={4} />
+          <TextInput type="text" value={nextPassword} onChange={(event) => setNextPassword(event.target.value)} minLength={3} />
         </Field>
         <button className="btn btn-secondary w-fit" type="submit">Trocar a senha</button>
       </form>
