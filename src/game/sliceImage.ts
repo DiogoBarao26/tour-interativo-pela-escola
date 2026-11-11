@@ -1,5 +1,5 @@
 export async function sliceImage(url: string, rows: number): Promise<string[]> {
-  const image = await load(url).catch(() => drawSchool());
+  const image = url.startsWith('data:') ? await load(url) : await load(url).catch(() => drawSchool());
   const width = image instanceof HTMLImageElement ? image.naturalWidth || 1200 : image.width;
   const height = image instanceof HTMLImageElement ? image.naturalHeight || 800 : image.height;
   const pieceWidth = Math.max(1, Math.floor(width / rows));

@@ -22,13 +22,18 @@ export function PuzzleAdminPage() {
 
   async function upload(file: File | undefined) {
     if (!file || !rules) return;
-    const imageUrl = await uploadAsset('puzzles', file);
-    const puzzle: PuzzleAdmin = { id: crypto.randomUUID(), title, imageUrl, active: true, createdAt: new Date().toISOString() };
-    await savePuzzle(puzzle);
-    const next = { ...rules, puzzleSelectedId: puzzle.id };
-    await saveRules(next);
-    setMessage('Imagem enviada ao armazenamento e selecionada para a partida.');
-    await refresh();
+    setError(null);
+    try {
+      const imageUrl = await uploadAsset('puzzles', file);
+      const puzzle: PuzzleAdmin = { id: crypto.randomUUID(), title, imageUrl, active: true, createdAt: new Date().toISOString() };
+      await savePuzzle(puzzle);
+      const next = { ...rules, puzzleSelectedId: puzzle.id };
+      await saveRules(next);
+      setMessage('Foto pronta. Este jogo já usa ela no quebra-cabeça.');
+      await refresh();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Não foi possível guardar a foto.');
+    }
   }
 
   async function choose(id: string) {
@@ -56,7 +61,7 @@ export function PuzzleAdminPage() {
     <section className="grid gap-5">
       <header>
         <h1 className="text-3xl font-extrabold">Foto do quebra-cabeça</h1>
-        <p>As fotos ficam no armazenamento da nuvem e podem ser trocadas a qualquer momento.</p>
+        <p>Envie a foto da escola. Ela passa a ser a imagem deste jogo.</p>
       </header>
       <Notice error={error} message={message} />
       <form className="card grid gap-3 p-4 md:grid-cols-2" onSubmit={(event) => event.preventDefault()}>

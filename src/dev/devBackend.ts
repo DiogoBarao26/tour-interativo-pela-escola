@@ -441,6 +441,14 @@ function startPhase(db: Db, token: string, phase: PhaseKey) {
   const active = session.attempts.find((item) => item.phase === phase && item.status === 'active');
   if (active) {
     if (phase === 'quiz') syncQuiz(db, active);
+    if (phase === 'puzzle') {
+      const fresh = secretFor(db, 'puzzle') as PuzzleSecret;
+      const previous = active.secret as PuzzleSecret;
+      const changed = fresh.puzzleId !== previous.puzzleId || fresh.rows !== previous.rows;
+      active.secret = changed
+        ? fresh
+        : { ...previous, title: fresh.title, baseScore: fresh.baseScore, speedBonus: fresh.speedBonus, timeLimitSec: fresh.timeLimitSec };
+    }
     if (phase === 'words') {
       const fresh = secretFor(db, 'words') as WordsSecret;
       const previous = active.secret as WordsSecret;
@@ -713,7 +721,7 @@ function payload(db: Db, session: Session, attempt: Attempt) {
       phase: 'puzzle' as const,
       ...common,
       ...secret,
-      imageUrl: selected?.imageUrl || secret.imageUrl,
+      imageUrl: selected?.imageUrl || secret.imageUrl || 'bundled:escola.svg',
       title: selected?.title || secret.title,
     };
   }
@@ -786,7 +794,8 @@ function secretFor(db: Db, phase: PhaseKey): Record<string, unknown> {
       rows,
       baseScore: db.rules.puzzleScore,
       speedBonus: db.rules.puzzleSpeedBonus,
-      imageUrl: selected?.imageUrl?.startsWith('data:') ? 'bundled:escola.svg' : (selected?.imageUrl || 'bundled:escola.svg'),
+      puzzleId: selected?.id ?? '',
+      imageUrl: selected?.imageUrl && !selected.imageUrl.startsWith('data:') ? selected.imageUrl : '',
       title: selected?.title || 'Quebra-cabeça da escola',
       shuffle: shuffleNumbers(rows * rows),
     };
@@ -898,7 +907,7 @@ type QuizSecret = {
   maxScore: number;
   questions: { id: string; prompt: string; imageUrl: string | null; points: number; correctAlternativeId: string; alternatives: { id: string; label: string }[] }[];
 };
-type PuzzleSecret = { timeLimitSec: number; rows: number; baseScore: number; speedBonus: number; imageUrl: string; title: string; shuffle: number[] };
+type PuzzleSecret = { timeLimitSec: number; rows: number; baseScore: number; speedBonus: number; imageUrl: string; title: string; shuffle: number[]; puzzleId?: string };
 type WordsSecret = {
   timeLimitSec: number;
   fallSpeed: HomeConfig['rules']['wordsFallSpeed'];

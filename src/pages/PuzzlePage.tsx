@@ -44,16 +44,27 @@ export function PuzzlePage() {
         setSession(stateResponse.state);
         setPayload(phase);
         const saved = sessionStorage.getItem(`tour.puzzle.${phase.attemptId}`);
-        setOrder(saved ? (JSON.parse(saved) as number[]) : phase.shuffle);
+        const stored = saved ? (JSON.parse(saved) as number[]) : null;
+        setOrder(stored && stored.length === phase.shuffle.length ? stored : phase.shuffle);
         setPieces(await sliceImage(resolvePuzzleImage(phase.imageUrl), phase.rows));
       })
       .catch(async (caught) => {
-        try {
-          const stateResponse = await callGame<{ state: SessionState }>('state', { token });
-          if (!cancel) navigate(nextPath(stateResponse.state));
-        } catch {
-          if (!cancel) setError(caught instanceof Error ? caught.message : 'Não foi possível abrir o quebra-cabeça.');
+        if (cancel) return;
+        const message = caught instanceof Error ? caught.message : 'Não foi possível abrir o quebra-cabeça.';
+        if (/não está liberada|já foi encerrado|tentativas desta fase acabaram/i.test(message)) {
+          try {
+            const stateResponse = await callGame<{ state: SessionState }>('state', { token });
+            if (cancel) return;
+            const path = nextPath(stateResponse.state);
+            if (path !== '/tour/quebra-cabeca') {
+              navigate(path);
+              return;
+            }
+          } catch {
+            // A mensagem abaixo explica por que a foto não abriu.
+          }
         }
+        setError(message);
       });
     const timer = window.setInterval(() => setNow(Date.now()), 250);
     return () => {

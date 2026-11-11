@@ -194,7 +194,7 @@ export async function loadDashboard(): Promise<DashboardData> {
 export async function uploadAsset(bucket: 'branding' | 'puzzles' | 'questions' | 'audio', file: File) {
   if (file.size > 8 * 1024 * 1024) throw new Error('O arquivo precisa ter no máximo 8 MB.');
   const db = client();
-  if (!db) return readFile(file);
+  if (!db) return file.type.startsWith('image/') ? compressImage(file) : readFile(file);
   const extension = file.name.split('.').pop()?.toLowerCase() || 'bin';
   const path = `${crypto.randomUUID()}.${extension}`;
   const { error } = await db.storage.from(bucket).upload(path, file, { contentType: file.type || undefined });
@@ -264,4 +264,26 @@ function readFile(file: File) {
     reader.onerror = () => reject(new Error('Não foi possível ler o arquivo.'));
     reader.readAsDataURL(file);
   });
+}
+
+function compressImage(file: File) {
+  return readFile(file).then((source) => new Promise<string>((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => {
+      const max = 1400;
+      const scale = Math.min(1, max / Math.max(image.naturalWidth || image.width, image.naturalHeight || image.height, 1));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round((image.naturalWidth || image.width) * scale));
+      canvas.height = Math.max(1, Math.round((image.naturalHeight || image.height) * scale));
+      const context = canvas.getContext('2d');
+      if (!context) {
+        resolve(source);
+        return;
+      }
+      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL('image/jpeg', 0.82));
+    };
+    image.onerror = () => reject(new Error('Use uma foto JPG ou PNG.'));
+    image.src = source;
+  }));
 }
