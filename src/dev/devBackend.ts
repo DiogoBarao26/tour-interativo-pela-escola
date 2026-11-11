@@ -162,12 +162,31 @@ function loadStore(): Store {
       changed = true;
     }
   }
-  if (changed) localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
+  for (const game of GAMES) slim(parsed.games[game.id]);
+  if (changed) saveStore(parsed);
   return parsed;
 }
 
 function saveStore(store: Store) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+  } catch {
+    throw new Error('Não coube neste aparelho. Use uma foto menor e tente de novo.');
+  }
+}
+
+function slim(db: Db | undefined) {
+  if (!db) return;
+  for (const session of db.sessions ?? []) {
+    for (const attempt of session.attempts ?? []) {
+      const secret = attempt.secret as { imageUrl?: string; questions?: { imageUrl?: string | null }[] };
+      if (typeof secret?.imageUrl === 'string' && secret.imageUrl.startsWith('data:')) secret.imageUrl = 'bundled:escola.svg';
+      if (!Array.isArray(secret?.questions)) continue;
+      for (const question of secret.questions) {
+        if (typeof question.imageUrl === 'string' && question.imageUrl.startsWith('data:')) question.imageUrl = null;
+      }
+    }
+  }
 }
 
 function adminSlotId() {
@@ -323,15 +342,21 @@ export const admin = {
   },
 };
 
-export async function handle(action: string, body: Record<string, unknown>) {
-  const store = loadStore();
-  const id = action === 'start' ? String(body.slotId ?? '') : slotByToken(store, String(body.token ?? ''));
-  const db = store.games[id];
-  if (!db) throw new Error(action === 'start' ? 'Escolha um jogo para começar.' : 'Esta partida não foi encontrada. Volte ao início.');
-  const result = run(db, action, body);
-  store.games[id] = db;
-  saveStore(store);
-  return result;
+let chain = Promise.resolve();
+
+export function handle(action: string, body: Record<string, unknown>) {
+  const job = chain.then(() => {
+    const store = loadStore();
+    const id = action === 'start' ? String(body.slotId ?? '') : slotByToken(store, String(body.token ?? ''));
+    const db = store.games[id];
+    if (!db) throw new Error(action === 'start' ? 'Escolha um jogo para começar.' : 'Esta partida não foi encontrada. Volte ao início.');
+    const result = run(db, action, body);
+    store.games[id] = db;
+    saveStore(store);
+    return result;
+  });
+  chain = job.then(() => undefined, () => undefined);
+  return job;
 }
 
 function slotByToken(store: Store, token: string) {
@@ -414,7 +439,17 @@ function startPhase(db: Db, token: string, phase: PhaseKey) {
   if (!['quiz', 'puzzle', 'words'].includes(phase)) throw new Error('Fase inválida.');
   if (nextOpen(session) !== phase) throw new Error('Esta fase ainda não está liberada.');
   const active = session.attempts.find((item) => item.phase === phase && item.status === 'active');
-  if (active) return payload(session, active);
+  if (active) {
+    if (phase === 'quiz') syncQuiz(db, active);
+    if (phase === 'words') {
+      const fresh = secretFor(db, 'words') as WordsSecret;
+      const previous = active.secret as WordsSecret;
+      active.secret = { ...previous, words: fresh.words, maxScore: fresh.maxScore, penalty: fresh.penalty };
+      const ids = new Set(fresh.words.map((word) => word.id));
+      active.instances = active.instances.filter((item) => ids.has(item.wordId));
+    }
+    return payload(db, session, active);
+  }
   const used = session.phases[phase].attemptsUsed;
   const max = session.budget[`${phase}Attempts`];
   if (used >= max) throw new Error('As tentativas desta fase acabaram.');
@@ -434,13 +469,14 @@ function startPhase(db: Db, token: string, phase: PhaseKey) {
   session.attempts.push(attempt);
   session.phases[phase].status = 'active';
   session.phases[phase].attemptsUsed = used + 1;
-  return payload(session, attempt);
+  return payload(db, session, attempt);
 }
 
 function answer(db: Db, body: Record<string, unknown>) {
   const session = sessionByToken(db, String(body.token ?? ''));
   const attempt = attemptOf(session, String(body.attemptId ?? ''), 'quiz');
   if (attempt.status !== 'active') throw new Error('Esta tentativa já foi encerrada.');
+  syncQuiz(db, attempt);
   const secret = attempt.secret as QuizSecret;
   const question = secret.questions.find((item) => item.id === String(body.questionId ?? ''));
   if (!question) throw new Error('Pergunta inválida.');
@@ -635,7 +671,7 @@ function finalize(session: Session): SessionState {
   return toState(session);
 }
 
-function payload(session: Session, attempt: Attempt) {
+function payload(db: Db, session: Session, attempt: Attempt) {
   const common = {
     attemptId: attempt.id,
     attemptsUsed: session.phases[attempt.phase].attemptsUsed,
@@ -651,13 +687,16 @@ function payload(session: Session, attempt: Attempt) {
       perQuestionSec: secret.perQuestionSec,
       score: attempt.score,
       errors: attempt.errors,
-      questions: secret.questions.map((question) => ({
-        id: question.id,
-        prompt: question.prompt,
-        imageUrl: question.imageUrl,
-        points: question.points,
-        alternatives: question.alternatives,
-      })),
+      questions: secret.questions.map((question) => {
+        const live = db.questions.find((item) => item.id === question.id);
+        return {
+          id: question.id,
+          prompt: question.prompt,
+          imageUrl: live?.imageUrl || question.imageUrl,
+          points: question.points,
+          alternatives: question.alternatives,
+        };
+      }),
       answered: attempt.answers.map((item) => ({
         questionId: item.questionId,
         correct: item.correct,
@@ -669,7 +708,14 @@ function payload(session: Session, attempt: Attempt) {
   }
   if (attempt.phase === 'puzzle') {
     const secret = attempt.secret as PuzzleSecret;
-    return { phase: 'puzzle' as const, ...common, ...secret };
+    const selected = db.puzzles.find((item) => item.id === db.rules.puzzleSelectedId) ?? db.puzzles.find((item) => item.active);
+    return {
+      phase: 'puzzle' as const,
+      ...common,
+      ...secret,
+      imageUrl: selected?.imageUrl || secret.imageUrl,
+      title: selected?.title || secret.title,
+    };
   }
   const secret = attempt.secret as WordsSecret;
   return {
@@ -691,6 +737,25 @@ function payload(session: Session, attempt: Attempt) {
   };
 }
 
+function syncQuiz(db: Db, attempt: Attempt) {
+  const fresh = secretFor(db, 'quiz') as QuizSecret;
+  const previous = (attempt.secret ?? {}) as Partial<QuizSecret>;
+  const live = new Map(fresh.questions.map((question) => [question.id, question]));
+  const ordered = Array.isArray(previous.questions) ? previous.questions : [];
+  const kept = ordered
+    .map((question) => live.get(question.id))
+    .filter((question): question is QuizSecret['questions'][number] => Boolean(question));
+  const known = new Set(kept.map((question) => question.id));
+  const questions = [...kept, ...fresh.questions.filter((question) => !known.has(question.id))];
+  attempt.secret = {
+    timeLimitSec: previous.timeLimitSec || fresh.timeLimitSec,
+    perQuestionSec: previous.perQuestionSec || fresh.perQuestionSec,
+    maxScore: fresh.maxScore,
+    questions,
+  };
+  attempt.answers = (attempt.answers ?? []).filter((item) => questions.some((question) => question.id === item.questionId));
+}
+
 function secretFor(db: Db, phase: PhaseKey): Record<string, unknown> {
   if (phase === 'quiz') {
     let questions = db.questions
@@ -702,7 +767,7 @@ function secretFor(db: Db, phase: PhaseKey): Record<string, unknown> {
         return {
           id: item.id,
           prompt: item.prompt,
-          imageUrl: item.imageUrl,
+          imageUrl: item.imageUrl?.startsWith('data:') ? null : item.imageUrl,
           points: item.points,
           correctAlternativeId: correct.id,
           alternatives: item.alternatives.map((alternative) => ({ id: alternative.id, label: alternative.label })),
@@ -721,7 +786,7 @@ function secretFor(db: Db, phase: PhaseKey): Record<string, unknown> {
       rows,
       baseScore: db.rules.puzzleScore,
       speedBonus: db.rules.puzzleSpeedBonus,
-      imageUrl: selected?.imageUrl || 'bundled:escola.svg',
+      imageUrl: selected?.imageUrl?.startsWith('data:') ? 'bundled:escola.svg' : (selected?.imageUrl || 'bundled:escola.svg'),
       title: selected?.title || 'Quebra-cabeça da escola',
       shuffle: shuffleNumbers(rows * rows),
     };

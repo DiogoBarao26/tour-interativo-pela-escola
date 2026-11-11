@@ -52,12 +52,21 @@ export function QuizPage() {
       })
       .catch(async (caught) => {
         if (cancel) return;
-        try {
-          const stateResponse = await callGame<{ state: SessionState }>('state', { token });
-          navigate(nextPath(stateResponse.state));
-        } catch {
-          setError(caught instanceof Error ? caught.message : 'Não foi possível abrir o quiz.');
+        const message = caught instanceof Error ? caught.message : 'Não foi possível abrir o quiz.';
+        if (/não está liberada|já foi encerrado|tentativas desta fase acabaram/i.test(message)) {
+          try {
+            const stateResponse = await callGame<{ state: SessionState }>('state', { token });
+            if (cancel) return;
+            const path = nextPath(stateResponse.state);
+            if (path !== '/tour/quiz') {
+              navigate(path);
+              return;
+            }
+          } catch {
+            // A mensagem abaixo explica por que as perguntas não abriram.
+          }
         }
+        setError(message);
       });
     const timer = window.setInterval(() => setNow(Date.now()), 250);
     return () => {

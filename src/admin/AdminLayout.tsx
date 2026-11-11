@@ -3,7 +3,8 @@ import { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import { setDevAdmin } from './guard';
-import { activeGame, clearActiveGame } from './teamPassword';
+import { activeGame, clearActiveGame, setPlayGame } from './teamPassword';
+import { clearToken } from '../services/gameApi';
 
 const LINKS = [
   ['/admin', 'Início'],
@@ -54,7 +55,18 @@ export function AdminLayout() {
           ))}
         </nav>
         <div className="grid gap-2 p-3">
-          <a className="btn btn-secondary" href={`${import.meta.env.BASE_URL}`}>Jogar</a>
+          <a
+            className="btn btn-secondary"
+            href={`${import.meta.env.BASE_URL}?jogo=${activeGame()?.id ?? ''}`}
+            onClick={() => {
+              const mine = activeGame();
+              if (!mine) return;
+              setPlayGame(mine.id);
+              clearToken();
+            }}
+          >
+            Jogar este jogo
+          </a>
           <button className="btn btn-secondary" type="button" onClick={() => void logout()}>Sair</button>
         </div>
       </aside>
