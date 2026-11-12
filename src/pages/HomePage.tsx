@@ -7,6 +7,7 @@ import { useConfig } from '../context/ConfigContext';
 import { PHASE_META } from '../domain/defaults';
 import { maxPossibleScore } from '../domain/rules';
 import { useAudio } from '../lib/audio';
+import { Media, useMediaUrl } from '../lib/media';
 import { isSupabaseConfigured } from '../lib/supabase';
 import { callGame, clearToken, loadGameChoices, nextPath, saveToken } from '../services/gameApi';
 import type { SessionState } from '../domain/types';
@@ -23,6 +24,7 @@ export function HomePage() {
   const [choices, setChoices] = useState<{ id: string; name: string; schoolName: string; gameTitle: string }[]>([]);
   const [chosen, setChosen] = useState(playGameId());
   const ready = config.mode !== 'unconfigured' && !loading && !error && (isSupabaseConfigured || Boolean(chosen));
+  const coverUrl = useMediaUrl(config.theme.coverUrl);
   const total = maxPossibleScore(config.rules);
 
   useEffect(() => {
@@ -120,14 +122,14 @@ export function HomePage() {
         <div
           className="min-h-48 bg-cover bg-center p-6 md:p-10"
           style={{
-            backgroundImage: config.theme.coverUrl
-              ? `linear-gradient(180deg, color-mix(in srgb, var(--bg) 10%, transparent), var(--bg)), url(${config.theme.coverUrl})`
+            backgroundImage: coverUrl
+              ? `linear-gradient(180deg, color-mix(in srgb, var(--bg) 10%, transparent), var(--bg)), url(${coverUrl})`
               : undefined,
           }}
         >
           <div className="flex items-center gap-4">
             {config.theme.logoUrl ? (
-              <img src={config.theme.logoUrl} alt="" className="h-16 w-16 rounded-2xl bg-white object-contain p-1" />
+              <Media url={config.theme.logoUrl} className="h-16 w-16 rounded-2xl bg-white object-contain p-1" />
             ) : (
               <div className="grid h-16 w-16 place-items-center rounded-2xl text-2xl font-extrabold text-white" style={{ background: 'var(--primary)' }} aria-hidden>
                 {config.theme.schoolName.slice(0, 1)}

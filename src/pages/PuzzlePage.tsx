@@ -5,6 +5,7 @@ import { Banner, Clock, GameHeader, PhaseTrack, ScorePill } from '../components/
 import { useConfig } from '../context/ConfigContext';
 import type { PuzzlePhasePayload, PuzzleResult, SessionState } from '../domain/types';
 import { isSolved, resolvePuzzleImage } from '../domain/rules';
+import { resolveMedia } from '../lib/media';
 import { sliceImage } from '../game/sliceImage';
 import { useAudio } from '../lib/audio';
 import { callGame, nextPath, readToken } from '../services/gameApi';
@@ -46,7 +47,7 @@ export function PuzzlePage() {
         const saved = sessionStorage.getItem(`tour.puzzle.${phase.attemptId}`);
         const stored = saved ? (JSON.parse(saved) as number[]) : null;
         setOrder(stored && stored.length === phase.shuffle.length ? stored : phase.shuffle);
-        setPieces(await sliceImage(resolvePuzzleImage(phase.imageUrl), phase.rows));
+        setPieces(await sliceImage(await resolveMedia(resolvePuzzleImage(phase.imageUrl)), phase.rows));
       })
       .catch(async (caught) => {
         if (cancel) return;
@@ -136,7 +137,7 @@ export function PuzzlePage() {
     const phase = await callGame<PuzzlePhasePayload>('start-phase', { token, phase: 'puzzle' });
     setPayload(phase);
     setOrder(phase.shuffle);
-    setPieces(await sliceImage(resolvePuzzleImage(phase.imageUrl), phase.rows));
+    setPieces(await sliceImage(await resolveMedia(resolvePuzzleImage(phase.imageUrl)), phase.rows));
   }
 
   async function continueTour() {

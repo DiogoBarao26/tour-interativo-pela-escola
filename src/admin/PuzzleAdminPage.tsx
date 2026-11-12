@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { PuzzleAdmin, RulesSettings } from '../domain/types';
+import { Media } from '../lib/media';
 import { deletePuzzle, loadAdminContent, savePuzzle, saveRules, uploadAsset } from '../services/adminApi';
 import { Field, Notice, Select, TextInput } from './fields';
 
@@ -83,7 +84,7 @@ export function PuzzleAdminPage() {
       <ul className="grid gap-4 md:grid-cols-2">
         {puzzles.map((puzzle) => (
           <li key={puzzle.id} className="card overflow-hidden">
-            {puzzle.imageUrl ? <img src={puzzle.imageUrl} alt="" className="h-44 w-full object-cover" /> : <div className="grid h-44 place-items-center bg-white font-bold">Imagem demonstrativa</div>}
+            {puzzle.imageUrl ? <Media url={puzzle.imageUrl} className="h-44 w-full object-cover" /> : <div className="grid h-44 place-items-center bg-white font-bold">Imagem demonstrativa</div>}
             <div className="grid gap-3 p-4">
               <strong>{puzzle.title}</strong>
               <p className="text-sm">{rules.puzzleSelectedId === puzzle.id ? 'Usada na partida' : 'Disponível'}</p>

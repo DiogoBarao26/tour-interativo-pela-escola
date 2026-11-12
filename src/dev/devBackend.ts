@@ -171,7 +171,7 @@ function saveStore(store: Store) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
   } catch {
-    throw new Error('Não coube neste aparelho. Use uma foto menor e tente de novo.');
+    throw new Error('Não foi possível guardar neste aparelho.');
   }
 }
 

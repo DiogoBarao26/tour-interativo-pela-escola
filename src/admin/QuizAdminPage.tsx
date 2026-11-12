@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { QuestionAdmin } from '../domain/types';
+import { Media } from '../lib/media';
 import { deleteQuestion, loadAdminContent, reorderQuestions, saveQuestion, uploadAsset } from '../services/adminApi';
 import { Field, Notice, TextInput, Toggle } from './fields';
 
@@ -79,10 +80,10 @@ export function QuizAdminPage() {
           <input type="file" accept="image/*" onChange={(event) => {
             const file = event.target.files?.[0];
             if (!file) return;
-            void uploadAsset('questions', file).then((imageUrl) => setDraft({ ...draft, imageUrl }));
+            void uploadAsset('questions', file).then((imageUrl) => setDraft({ ...draft, imageUrl })).catch((caught) => setError(caught instanceof Error ? caught.message : 'Não foi possível guardar a foto.'));
           }} />
         </Field>
-        {draft.imageUrl ? <img src={draft.imageUrl} alt="" className="h-28 rounded-2xl object-cover" /> : null}
+        {draft.imageUrl ? <Media url={draft.imageUrl} className="h-28 rounded-2xl object-cover" /> : null}
         <Toggle label="Pergunta ativa" checked={draft.active} onChange={(active) => setDraft({ ...draft, active })} />
         <div className="grid gap-2">
           {draft.alternatives.map((alternative, index) => (

@@ -11,6 +11,7 @@ interface Ending {
   canRetry: boolean;
 }
 import { useAudio } from '../lib/audio';
+import { Media } from '../lib/media';
 import { callGame, nextPath, readToken } from '../services/gameApi';
 
 export function QuizPage() {
@@ -196,7 +197,7 @@ export function QuizPage() {
       {question && !outcome ? (
         <section className="card p-5 md:p-8" aria-live="polite">
           <p className="text-sm font-bold">Pergunta {cursor + 1} de {payload?.questions.length}. Vale {question.points} pontos.</p>
-          {question.imageUrl ? <img src={question.imageUrl} alt="" className="mt-4 max-h-56 w-full rounded-2xl object-cover" /> : null}
+          {question.imageUrl ? <Media url={question.imageUrl} className="mt-4 max-h-56 w-full rounded-2xl object-cover" /> : null}
           <h2 className="mt-4 text-2xl font-extrabold md:text-3xl">{question.prompt}</h2>
           <div className="mt-5 grid gap-3">
             {question.alternatives.map((alternative, option) => {

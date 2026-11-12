@@ -37,8 +37,13 @@ export function AppearancePage() {
 
   async function upload(kind: 'logoUrl' | 'coverUrl', file: File | undefined) {
     if (!file) return;
-    const url = await uploadAsset('branding', file);
-    setTheme((current) => current ? { ...current, [kind]: url } : current);
+    setError(null);
+    try {
+      const url = await uploadAsset('branding', file);
+      setTheme((current) => current ? { ...current, [kind]: url } : current);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Não foi possível guardar a foto.');
+    }
   }
 
   return (

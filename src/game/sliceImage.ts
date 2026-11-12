@@ -1,5 +1,5 @@
 export async function sliceImage(url: string, rows: number): Promise<string[]> {
-  const image = url.startsWith('data:') ? await load(url) : await load(url).catch(() => drawSchool());
+  const image = url.startsWith('data:') || url.startsWith('blob:') ? await load(url) : await load(url).catch(() => drawSchool());
   const width = image instanceof HTMLImageElement ? image.naturalWidth || 1200 : image.width;
   const height = image instanceof HTMLImageElement ? image.naturalHeight || 800 : image.height;
   const pieceWidth = Math.max(1, Math.floor(width / rows));
@@ -32,7 +32,7 @@ export async function sliceImage(url: string, rows: number): Promise<string[]> {
 function load(url: string) {
   return new Promise<HTMLImageElement>((resolve, reject) => {
     const image = new Image();
-    if (!url.startsWith('data:')) image.crossOrigin = 'anonymous';
+    if (!url.startsWith('data:') && !url.startsWith('blob:')) image.crossOrigin = 'anonymous';
     image.onload = () => resolve(image);
     image.onerror = () => reject(new Error('imagem'));
     image.src = url;
