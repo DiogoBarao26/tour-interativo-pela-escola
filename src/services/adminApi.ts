@@ -194,7 +194,7 @@ export async function loadDashboard(): Promise<DashboardData> {
 
 export async function uploadAsset(bucket: 'branding' | 'puzzles' | 'questions' | 'audio', file: File) {
   const db = client();
-  if (!db) return bucket === 'audio' ? readFile(file) : saveImage(file);
+  if (!db) return saveImage(file);
   const extension = file.name.split('.').pop()?.toLowerCase() || 'bin';
   const path = `${crypto.randomUUID()}.${extension}`;
   const { error } = await db.storage.from(bucket).upload(path, file, { contentType: file.type || undefined });
@@ -257,12 +257,4 @@ function ensure(error: { message?: string } | null, fallback: string) {
   throw new Error(fallback);
 }
 
-function readFile(file: File) {
-  return new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result));
-    reader.onerror = () => reject(new Error('Não foi possível ler o arquivo.'));
-    reader.readAsDataURL(file);
-  });
-}
 

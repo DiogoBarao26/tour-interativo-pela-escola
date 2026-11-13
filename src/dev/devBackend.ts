@@ -23,6 +23,7 @@ import {
 } from '../domain/rules';
 import type { AdminContent, DashboardData } from '../services/adminApi';
 import { activeGame, GAMES, playGameId } from '../admin/teamPassword';
+import { saveImage } from '../lib/media';
 
 const STORAGE_KEY = 'tour.local.db.v3';
 
@@ -163,16 +164,84 @@ function loadStore(): Store {
     }
   }
   for (const game of GAMES) slim(parsed.games[game.id]);
-  if (changed) saveStore(parsed);
+  if (changed) {
+    try {
+      writeStore(parsed);
+    } catch {
+      /* a gravação seguinte tira as fotos grandes e tenta de novo */
+    }
+  }
   return parsed;
 }
 
-function saveStore(store: Store) {
+function writeStore(store: Store) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+}
+
+async function saveStore(store: Store) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+    await relocateHeavy(store);
   } catch {
-    throw new Error('Não foi possível guardar neste aparelho.');
+    stripHeavy(store);
   }
+  try {
+    writeStore(store);
+  } catch {
+    stripHeavy(store);
+    try {
+      writeStore(store);
+    } catch {
+      throw new Error('Não foi possível guardar neste aparelho.');
+    }
+  }
+}
+
+function stripHeavy(value: unknown) {
+  if (Array.isArray(value)) {
+    value.forEach(stripHeavy);
+    return;
+  }
+  if (!value || typeof value !== 'object') return;
+  const record = value as Record<string, unknown>;
+  for (const key of Object.keys(record)) {
+    const current = record[key];
+    if (typeof current === 'string' && current.startsWith('data:') && current.length > 2048) record[key] = '';
+    else stripHeavy(current);
+  }
+}
+
+async function relocateHeavy(value: unknown, seen = new Map<string, Promise<string>>()): Promise<void> {
+  if (Array.isArray(value)) {
+    for (const item of value) await relocateHeavy(item, seen);
+    return;
+  }
+  if (!value || typeof value !== 'object') return;
+  const record = value as Record<string, unknown>;
+  for (const key of Object.keys(record)) {
+    const current = record[key];
+    if (typeof current === 'string' && current.startsWith('data:') && current.length > 2048) {
+      let job = seen.get(current);
+      if (!job) {
+        job = saveImage(dataUrlToBlob(current));
+        seen.set(current, job);
+      }
+      record[key] = await job;
+    } else {
+      await relocateHeavy(current, seen);
+    }
+  }
+}
+
+function dataUrlToBlob(dataUrl: string) {
+  const comma = dataUrl.indexOf(',');
+  const header = dataUrl.slice(0, comma);
+  const body = dataUrl.slice(comma + 1);
+  const mime = /data:([^;,]+)/.exec(header)?.[1] || 'application/octet-stream';
+  if (!header.includes(';base64')) return new Blob([decodeURIComponent(body)], { type: mime });
+  const binary = atob(body);
+  const bytes = new Uint8Array(binary.length);
+  for (let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index);
+  return new Blob([bytes], { type: mime });
 }
 
 function slim(db: Db | undefined) {
@@ -197,10 +266,13 @@ function load(): Db {
   return loadStore().games[adminSlotId()];
 }
 
-function save(db: Db) {
-  const store = loadStore();
-  store.games[adminSlotId()] = db;
-  saveStore(store);
+function update(change: (db: Db) => void) {
+  return enqueue(async () => {
+    const store = loadStore();
+    const db = store.games[adminSlotId()];
+    change(db);
+    await saveStore(store);
+  });
 }
 
 function viewingId() {
@@ -251,64 +323,64 @@ export const admin = {
     };
   },
   saveTheme(theme: ThemeSettings) {
-    const db = load();
-    db.theme = theme;
-    save(db);
+    return update((db) => {
+      db.theme = theme;
+    });
   },
   saveRules(rules: RulesSettings) {
-    const db = load();
-    db.rules = rules;
-    save(db);
+    return update((db) => {
+      db.rules = rules;
+    });
   },
   saveAudio(audio: AudioSettings) {
-    const db = load();
-    db.audio = audio;
-    save(db);
+    return update((db) => {
+      db.audio = audio;
+    });
   },
   saveQuestion(question: QuestionAdmin) {
-    const db = load();
-    const index = db.questions.findIndex((item) => item.id === question.id);
-    if (index >= 0) db.questions[index] = question;
-    else db.questions.push(question);
-    save(db);
+    return update((db) => {
+      const index = db.questions.findIndex((item) => item.id === question.id);
+      if (index >= 0) db.questions[index] = question;
+      else db.questions.push(question);
+    });
   },
   deleteQuestion(id: string) {
-    const db = load();
-    db.questions = db.questions.filter((item) => item.id !== id);
-    save(db);
+    return update((db) => {
+      db.questions = db.questions.filter((item) => item.id !== id);
+    });
   },
   reorderQuestions(ids: string[]) {
-    const db = load();
-    ids.forEach((id, index) => {
-      const question = db.questions.find((item) => item.id === id);
-      if (question) question.position = index + 1;
+    return update((db) => {
+      ids.forEach((id, index) => {
+        const question = db.questions.find((item) => item.id === id);
+        if (question) question.position = index + 1;
+      });
     });
-    save(db);
   },
   savePuzzle(puzzle: PuzzleAdmin) {
-    const db = load();
-    const index = db.puzzles.findIndex((item) => item.id === puzzle.id);
-    if (index >= 0) db.puzzles[index] = puzzle;
-    else db.puzzles.push(puzzle);
-    save(db);
+    return update((db) => {
+      const index = db.puzzles.findIndex((item) => item.id === puzzle.id);
+      if (index >= 0) db.puzzles[index] = puzzle;
+      else db.puzzles.push(puzzle);
+    });
   },
   deletePuzzle(id: string) {
-    const db = load();
-    db.puzzles = db.puzzles.filter((item) => item.id !== id);
-    if (db.rules.puzzleSelectedId === id) db.rules.puzzleSelectedId = db.puzzles[0]?.id ?? null;
-    save(db);
+    return update((db) => {
+      db.puzzles = db.puzzles.filter((item) => item.id !== id);
+      if (db.rules.puzzleSelectedId === id) db.rules.puzzleSelectedId = db.puzzles[0]?.id ?? null;
+    });
   },
   saveWord(word: WordAdmin) {
-    const db = load();
-    const index = db.words.findIndex((item) => item.id === word.id);
-    if (index >= 0) db.words[index] = word;
-    else db.words.push(word);
-    save(db);
+    return update((db) => {
+      const index = db.words.findIndex((item) => item.id === word.id);
+      if (index >= 0) db.words[index] = word;
+      else db.words.push(word);
+    });
   },
   deleteWord(id: string) {
-    const db = load();
-    db.words = db.words.filter((item) => item.id !== id);
-    save(db);
+    return update((db) => {
+      db.words = db.words.filter((item) => item.id !== id);
+    });
   },
   loadDashboard(): DashboardData {
     const db = load();
@@ -344,19 +416,23 @@ export const admin = {
 
 let chain = Promise.resolve();
 
+function enqueue<T>(job: () => Promise<T>) {
+  const run = chain.then(job, job);
+  chain = run.then(() => undefined, () => undefined);
+  return run;
+}
+
 export function handle(action: string, body: Record<string, unknown>) {
-  const job = chain.then(() => {
+  return enqueue(async () => {
     const store = loadStore();
     const id = action === 'start' ? String(body.slotId ?? '') : slotByToken(store, String(body.token ?? ''));
     const db = store.games[id];
     if (!db) throw new Error(action === 'start' ? 'Escolha um jogo para começar.' : 'Esta partida não foi encontrada. Volte ao início.');
     const result = run(db, action, body);
     store.games[id] = db;
-    saveStore(store);
+    await saveStore(store);
     return result;
   });
-  chain = job.then(() => undefined, () => undefined);
-  return job;
 }
 
 function slotByToken(store: Store, token: string) {

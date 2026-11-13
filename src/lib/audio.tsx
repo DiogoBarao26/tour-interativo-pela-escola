@@ -3,6 +3,7 @@ import { createContext, useContext, useEffect, useMemo, useRef, useState } from 
 import { AUDIO_CATALOG } from '../domain/defaults';
 import type { AudioKey, AudioSettings } from '../domain/types';
 import { publicAsset } from '../domain/rules';
+import { resolveMedia } from './media';
 
 interface AudioApi {
   muted: boolean;
@@ -75,13 +76,16 @@ export function AudioProvider({ settings, children }: { settings: AudioSettings;
     const current = musicRef.current;
     if (current && current.dataset.key === key && !current.paused) return;
     current?.pause();
-    const audio = new Audio(urlFor(key));
-    audio.loop = true;
-    audio.dataset.key = key;
-    audio.volume = musicVolume(settingsRef.current, false);
-    musicRef.current = audio;
     pendingMusic.current = key;
-    void audio.play().catch(() => undefined);
+    void resolveMedia(urlFor(key)).then((src) => {
+      if (!src || pendingMusic.current !== key || mutedRef.current) return;
+      const audio = new Audio(src);
+      audio.loop = true;
+      audio.dataset.key = key;
+      audio.volume = musicVolume(settingsRef.current, false);
+      musicRef.current = audio;
+      void audio.play().catch(() => undefined);
+    });
   }
 
   function stopMusic() {
@@ -92,17 +96,23 @@ export function AudioProvider({ settings, children }: { settings: AudioSettings;
 
   function playSfx(key: AudioKey) {
     if (!settingsRef.current.enabled || mutedRef.current || !unlockedRef.current) return;
-    const audio = new Audio(urlFor(key));
-    audio.volume = sfxVolume(settingsRef.current);
-    void audio.play().catch(() => undefined);
+    void resolveMedia(urlFor(key)).then((src) => {
+      if (!src) return;
+      const audio = new Audio(src);
+      audio.volume = sfxVolume(settingsRef.current);
+      void audio.play().catch(() => undefined);
+    });
   }
 
   function preview(url: string, kind: 'music' | 'sfx') {
     previewRef.current?.pause();
-    const audio = new Audio(url);
-    audio.volume = kind === 'music' ? musicVolume(settingsRef.current, false) : sfxVolume(settingsRef.current);
-    previewRef.current = audio;
-    void audio.play().catch(() => undefined);
+    void resolveMedia(url).then((src) => {
+      if (!src) return;
+      const audio = new Audio(src);
+      audio.volume = kind === 'music' ? musicVolume(settingsRef.current, false) : sfxVolume(settingsRef.current);
+      previewRef.current = audio;
+      void audio.play().catch(() => undefined);
+    });
   }
 
   function stopPreview() {
